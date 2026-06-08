@@ -1,30 +1,30 @@
 # resume apply
 
-`resume-apply` is a Codex skill for assisted resume applications in mainland China job-search workflows.
+`resume-apply` 是一个用于中国大陆求职场景的 Codex skill，核心目标是帮助用户更有控制感地完成简历投递流程。
 
-It helps a user choose a dedicated resume folder, analyze resumes, collect job preferences, shortlist matching roles from recruiting platforms and company career pages, and assist with applications only after explicit user confirmation.
+它会引导用户选择一个专门存放简历的文件夹，读取简历内容，收集岗位偏好，从招聘平台和公司官网招聘页中筛选匹配岗位，并在用户明确确认后辅助完成投递。
 
-## What it does
+## 它能做什么
 
-- Uses a cross-platform resume folder setup instead of hard-coded Windows or macOS paths.
-- Stores settings in `~/.codex/resume-apply/settings.json`.
-- Reads resumes from the user-selected folder.
-- Supports strict, balanced, and broad matching modes.
-- Scores job descriptions against resume evidence and user preferences.
-- Creates shortlist and application log folders inside the resume folder.
-- Requires confirmation before any final application submission.
+- 首次使用时引导用户设置简历文件夹，不绑定 Windows 或 macOS 的固定路径。
+- 将配置保存在 `~/.codex/resume-apply/settings.json`。
+- 从用户选择的简历文件夹中读取简历。
+- 支持严格匹配、平衡匹配、广泛探索三种岗位筛选模式。
+- 根据简历证据和用户偏好评估 JD 匹配度。
+- 在简历文件夹内生成候选岗位清单和投递记录。
+- 在任何最终投递动作前暂停，等待用户确认。
 
-## Safety boundaries
+## 安全边界
 
-This skill is intentionally not a hidden auto-submit bot.
+这个 skill 不是隐藏式的全自动海投工具，而是一个需要用户确认的求职助手。
 
-- It does not save recruiting-site passwords.
-- It does not bypass CAPTCHA, SMS, QR login, anti-bot checks, or access controls.
-- It asks the user to log in manually.
-- It pauses before final submission.
-- It treats resumes and application logs as private personal data.
+- 不保存招聘网站账号密码。
+- 不绕过验证码、短信验证、扫码登录、反自动化检查或访问限制。
+- 需要用户手动登录招聘平台或公司招聘系统。
+- 最终提交前必须暂停并等待用户确认。
+- 将简历和投递记录视为个人隐私数据处理。
 
-## Structure
+## 目录结构
 
 ```text
 resume-apply/
@@ -39,8 +39,8 @@ resume-apply/
     └── manage_profile.py
 ```
 
-## Typical use
+## 典型使用方式
 
-Ask Codex to use `$resume-apply` to shortlist China mainland jobs for your resume and assist applications after you confirm.
+让 Codex 使用 `$resume-apply`，根据你的简历筛选适合的中国大陆岗位，并在你确认后辅助投递。
 
-On first use, the skill asks you to create and provide a dedicated resume folder. Later runs reuse that folder by default.
+第一次使用时，skill 会要求你创建并提供一个专门存放简历的文件夹。后续再次使用时，会默认复用这个文件夹。

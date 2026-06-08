@@ -16,7 +16,12 @@ def config_dir() -> Path:
     override = os.environ.get("RESUME_APPLY_CONFIG_DIR") or os.environ.get("RESUME_AUTO_APPLY_CONFIG_DIR")
     if override:
         return Path(override).expanduser().resolve()
-    return Path.home() / ".codex" / "resume-apply"
+
+    portable_dir = Path.home() / ".resume-apply"
+    legacy_codex_dir = Path.home() / ".codex" / "resume-apply"
+    if legacy_codex_dir.exists() and not portable_dir.exists():
+        return legacy_codex_dir
+    return portable_dir
 
 
 def settings_path() -> Path:

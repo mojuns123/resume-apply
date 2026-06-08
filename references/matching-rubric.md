@@ -36,17 +36,22 @@ For each candidate job, record:
 - company
 - role title
 - channel
-- job link
-- location
+- job link, for logs even if hidden from the queue confirmation view
+- location, for logs even if hidden from the queue confirmation view
 - salary if visible
 - score
 - match mode used
 - 2-4 sentence match reason
 - missing or uncertain requirements
 - risk notes
+- selected resume version
 - suggested resume/application angle
-- recommended action: `apply`, `review`, `skip`
+- queue status: `queued`, `submitted`, `needs_manual`, `skipped`, `failed`, or `paused`
+- status reason
+- whether the action was triggered by batch confirmation
 
 ## Decision Guidance
 
 In `strict` mode, prefer fewer high-quality applications. In `balanced` mode, include adjacent roles only when the resume has concrete proof. In `broad` mode, still exclude obvious mismatches, scams, unpaid roles unless requested, and jobs that violate hard user constraints.
+
+A job can enter the queue only when it satisfies the user's already-confirmed location preferences. The queue confirmation view does not need to repeat city/remote or job link, but logs should keep them when available.

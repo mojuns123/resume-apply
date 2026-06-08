@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create output folders and maintain application logs."""
+"""Create output folders and maintain application queue logs."""
 
 from __future__ import annotations
 
@@ -10,15 +10,25 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+STATUS_CHOICES = ["queued", "submitted", "needs_manual", "skipped", "failed", "paused", "applied", "saved", "unknown"]
+STATUS_ALIASES = {
+    "applied": "submitted",
+    "saved": "queued",
+    "unknown": "failed",
+}
+
 FIELDNAMES = [
     "timestamp",
     "status",
+    "status_reason",
     "company",
     "role",
     "channel",
     "job_link",
     "resume_file",
     "score",
+    "batch_confirmed",
+    "batch_id",
     "notes",
 ]
 
@@ -28,6 +38,10 @@ def resolve_resume_folder(folder: str) -> Path:
     if not path.exists() or not path.is_dir():
         raise SystemExit(f"Resume folder does not exist or is not a directory: {path}")
     return path
+
+
+def normalize_status(status: str) -> str:
+    return STATUS_ALIASES.get(status, status)
 
 
 def output_dirs(folder: Path) -> dict[str, Path]:
@@ -83,15 +97,19 @@ def command_init_dirs(args: argparse.Namespace) -> int:
 
 def command_append(args: argparse.Namespace) -> int:
     folder = resolve_resume_folder(args.resume_folder)
+    status = normalize_status(args.status)
     row = {
         "timestamp": datetime.now(timezone.utc).isoformat(),
-        "status": args.status,
+        "status": status,
+        "status_reason": args.status_reason or "",
         "company": args.company,
         "role": args.role,
         "channel": args.channel,
         "job_link": args.job_link,
         "resume_file": args.resume_file or "",
         "score": args.score or "",
+        "batch_confirmed": "true" if args.batch_confirmed else "false",
+        "batch_id": args.batch_id or "",
         "notes": args.notes or "",
     }
     write_row(folder, row)
@@ -107,23 +125,54 @@ def command_check_duplicate(args: argparse.Namespace) -> int:
     return 0
 
 
+def command_summary(args: argparse.Namespace) -> int:
+    folder = resolve_resume_folder(args.resume_folder)
+    rows = read_rows(folder)
+    if args.batch_id:
+        rows = [row for row in rows if row.get("batch_id") == args.batch_id]
+    counts: dict[str, int] = {}
+    manual_or_failed = []
+    for row in rows:
+        status = row.get("status", "")
+        counts[status] = counts.get(status, 0) + 1
+        if status in {"needs_manual", "failed"}:
+            manual_or_failed.append({
+                "company": row.get("company", ""),
+                "role": row.get("role", ""),
+                "status": status,
+                "status_reason": row.get("status_reason", ""),
+            })
+    result = {
+        "total": len(rows),
+        "counts": counts,
+        "manual_or_failed": manual_or_failed,
+        "csv": str(csv_path(folder)),
+        "jsonl": str(jsonl_path(folder)),
+    }
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Manage resume application logs")
+    parser = argparse.ArgumentParser(description="Manage resume application queue logs")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     init_cmd = subparsers.add_parser("init-dirs", help="Create output directories inside the resume folder")
     init_cmd.add_argument("resume_folder")
     init_cmd.set_defaults(func=command_init_dirs)
 
-    append = subparsers.add_parser("append", help="Append an application log row")
+    append = subparsers.add_parser("append", help="Append an application queue log row")
     append.add_argument("resume_folder")
-    append.add_argument("--status", required=True, choices=["applied", "skipped", "saved", "unknown"])
+    append.add_argument("--status", required=True, choices=STATUS_CHOICES)
+    append.add_argument("--status-reason")
     append.add_argument("--company", required=True)
     append.add_argument("--role", required=True)
     append.add_argument("--channel", required=True)
     append.add_argument("--job-link", required=True)
     append.add_argument("--resume-file")
     append.add_argument("--score")
+    append.add_argument("--batch-confirmed", action="store_true")
+    append.add_argument("--batch-id")
     append.add_argument("--notes")
     append.set_defaults(func=command_append)
 
@@ -131,6 +180,11 @@ def build_parser() -> argparse.ArgumentParser:
     duplicate.add_argument("resume_folder")
     duplicate.add_argument("--job-link", required=True)
     duplicate.set_defaults(func=command_check_duplicate)
+
+    summary = subparsers.add_parser("summary", help="Summarize application queue logs")
+    summary.add_argument("resume_folder")
+    summary.add_argument("--batch-id")
+    summary.set_defaults(func=command_summary)
 
     return parser
 

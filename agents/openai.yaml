@@ -1,0 +1,7 @@
+interface:
+  display_name: "resume apply"
+  short_description: "Shortlist China mainland jobs and assist confirmed applications"
+  default_prompt: "Use $resume-apply to shortlist China mainland jobs for my resume and assist applications after I confirm."
+
+policy:
+  allow_implicit_invocation: true
